@@ -3,20 +3,24 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
 )
 
-var isDebug = os.Getenv("DEBUG") == "1"
-
 func main() {
+	log.SetFlags(0) // Disable date and time logging
+	if _, isDebug := os.LookupEnv("DEBUG"); !isDebug {
+		log.SetOutput(io.Discard)
+	}
+
 	if len(os.Args) != 2 {
 		log.Fatal("Error: Usage: go run sol-p2.go file")
 	}
 
 	fileName := os.Args[1]
-	if isDebug { fmt.Println("Input file:", fileName) }
+	fmt.Println("Input file:", fileName)
 
 	file, err := os.Open(fileName)
 	if err != nil {
@@ -29,14 +33,14 @@ func main() {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		instruction := scanner.Text()
-		if isDebug { fmt.Println(instruction) }
+		log.Println(instruction)
 		
 		direction := instruction[:1]
 		distance, err := strconv.Atoi(instruction[1:]) 
 		if err != nil {
 			log.Fatal("Failed to parse distance:", instruction[1:])
 		}
-		if isDebug { fmt.Println(direction, distance) }
+		log.Println(direction, distance)
 
 		countZero += distance / 100
 		distance %= 100
@@ -50,10 +54,10 @@ func main() {
 		}
 		
 		newPosition := (curPosition + distance + 100) % 100
-		if isDebug { fmt.Println(curPosition, distance, newPosition) }
+		log.Println(curPosition, distance, newPosition)
 
 		if newPosition == 0 || (distance > 0 && newPosition < curPosition) || (distance < 0 && newPosition > curPosition && curPosition != 0) {
-			if isDebug { fmt.Println("INC") }
+			log.Println("INC")
 			countZero++
 		}
 
