@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"container/list"
 )
 
 var d = [][]int{
@@ -19,23 +20,23 @@ var d = [][]int{
 	{+1, +1},
 }
 
-func createGrid(file *os.File) []string {
-	var grid  []string
+func createGrid(file *os.File) [][]uint8 {
+	var grid [][]uint8
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		grid = append(grid, line)
+		grid = append(grid, []uint8(line))
 	}
 	return grid
 }
 
-func printGrid(grid []string) {
+func printGrid(grid [][]uint8) {
 	for i := range grid {
-		log.Println(grid[i])
+		log.Println(string(grid[i]))
 	}
 }
 
-func canClean(grid []string, x int, y int) bool {
+func canClean(grid [][]uint8, x int, y int) bool {
 	count := 0
 	for i := range(d) {
 		dx := x+d[i][0]
@@ -51,8 +52,7 @@ func canClean(grid []string, x int, y int) bool {
 	return count < 4
 }
 
-func solvePart1(file *os.File) {
-	grid := createGrid(file)
+func solvePart1(grid [][]uint8) {
 	printGrid(grid)
 	count := 0
 	for i := range len(grid) {
@@ -69,6 +69,41 @@ func solvePart1(file *os.File) {
 		}
 	}
 	fmt.Println("Solution of part 1:", count)
+}
+
+func solvePart2(grid [][]uint8) {
+	q := list.New()
+	for i := range len(grid) {
+		for j := range len(grid[i]) {
+			if grid[i][j] == '@' {
+				q.PushBack([2]int{i, j})
+			}
+		}
+	}
+
+	count := 0
+	for q.Len() > 0 {
+		coord, _ := q.Remove(q.Front()).([2]int)
+		i := coord[0]
+		j := coord[1]
+		if grid[i][j] == '@' && canClean(grid, i, j) {
+			count++
+			grid[i][j] = '.'
+
+			for di := range(d) {
+				dx := i+d[di][0]
+				dy := j+d[di][1]
+				if dx < 0 || dy < 0 || dx >= len(grid[i]) || dy >= len(grid) {
+					continue
+				}
+				if grid[dx][dy] == '@' {
+					q.PushBack([2]int{dx, dy})
+				}
+			}
+		}
+	}
+	printGrid(grid)
+	fmt.Println("Solution of part 2:", count)
 }
 
 func main() {
@@ -89,7 +124,9 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	solvePart1(file)
+	grid := createGrid(file)
+	solvePart1(grid)
+	solvePart2(grid)
 
 	file.Close()
 }
